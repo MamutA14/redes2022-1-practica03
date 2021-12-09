@@ -28,15 +28,16 @@ class ClientFTP(object):
     
     def update(self,filename):
             clientFile = "../dataC/"+ filename
+            rootfile = clientFile.split("/")[-1] #Me devolvera el nombre del documento y no toda la dirección
             try:
                 file = open(clientFile,"r")
                 data = file.read()
-                message = "UP"+","+filename
-                client.socket.send(message.encode("utf-8"))
-                msg = client.socket.recv(1024).decode("utf-8")
+                message = "UP"+","+rootfile
+                self.socket.send(message.encode("utf-8"))
+                msg = self.socket.recv(1024).decode("utf-8")
                 print(f"[SERVER] {msg}")
-                client.socket.send(data.encode("utf-8"))
-                msg = client.socket.recv(1024).decode("utf-8")
+                self.socket.send(data.encode("utf-8"))
+                msg = self.socket.recv(1024).decode("utf-8")
                 print(f"[SERVER]:{msg}")
             except FileNotFoundError as e :
                 print(str(e))
@@ -44,34 +45,28 @@ class ClientFTP(object):
                 
                  
                 
-            
+    def delete(self,filename):
+        try:
+             msg = "DELETE"+","+filename
+             self.socket.send(msg.encode("utf-8"))
+             msg = self.socket.recv(1024).decode("utf-8")
+             if(msg == "s"):
+                 print(f"[SERVER STATUS] SUCCESFULL DELETE OF "+filename)
+             elif(msg == "er"):
+                print(f"[SERVER STATUS] ERROR NO FILE NAME IT "+filename)       
+             elif(msg == "em"):
+                  print("[SERVER STATUS] ERROR THERE IS NO FILE IN SERVER")  
+        except Exception as e :
+            print(str(e))  
 
             
              
-            """
-            try:
-                message = "UP"+","+filename
-                self.socket.send(message.encode())
-            except Exception as e:
-                print(str(e))
-            self.socket.send(struct.pack("i",len(filename.encode())))
-            self.socket.send(filename.encode())
-            filesize = os.path.getsize(filename)
-            progress = tqdm.tqdm(range(filesize),f"Enciends {filename}",unit_scale=True,unit_divisor=1024)
-            with open(filename,'rb') as file:
-                self.socket.send(struct.pack("i",filesize))
-                for x in progress:
-                    bytes_read = file.read(self.__buffer)
-                    if not bytes_read:
-                        break
-                    self.socket.sendall(bytes_read)
-                    progress.update(len(bytes_read))   
-                    """ 
+            
     
     def exit(self):
         try:
-            client.socket.send("EXIT".encode("utf-8"))
-            msg = client.socket.recv(1024).decode("utf-8")
+            self.socket.send("EXIT".encode("utf-8"))
+            msg = self.socket.recv(1024).decode("utf-8")
             print(f"[SERVER POWEROFF] {msg}")
         except Exception as e:
             print(str(e))
@@ -90,6 +85,10 @@ if __name__ == '__main__':
         elif command.upper() == "UP":
             filename = input("Insert name file: ")
             client.update(filename)
+        
+        elif command.upper() == "DEL":
+            filename = input("Insert name file: ")
+            client.delete(filename)
         
         elif command.upper() == "EXIT":
             client.exit()

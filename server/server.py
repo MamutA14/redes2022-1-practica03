@@ -55,30 +55,33 @@ class ServerFTP(object):
         except OSError as e:
             print(str(e))
             print("Hubo un problema al crear el direcrtorio dataS")
-        
-             
-        """print(f"[LOADING FILE]: {filename}")
-        self.conn.send("OPEN CONNECTION".encode())
-        self.datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        readmode = "wb" if self.mode == "I" else  "w"
-        try:
-            with open(filename,readmode) as file:
-                while True:
-                    byte_recived = self.datasock.recv(self._buffer)
-                    if not byte_recived: break
-                    file.write(byte_recived)
-            self.conn.send("[Sucessful Transfer]")    
-        except Exception as e:
-            self.conn.send("[Error access file]")
-            print(str(e))
-        finally:
-            self.datasock.close()
-            print("Succesful onload")   """  
-
+            self.conn.send("There was an intern problem uploading file please retry".encode("utf-8"))
+            
+    
+    def delete(self, data):
+        filename = data[1]
+        msg_stat = ""
+        dirS ="../dataS/"
+        absfilename = dirS+filename
+        if(not (os.path.exists(dirS)) ):
+            msg_stat = "em"
+            print("[ERROR] THERE IS NO FILE IN SERVER")
+        elif(os.path.exists(absfilename)):
+            os.remove(absfilename)     
+            msg_stat = "s"
+            print("[SUCCESS] DELETE OF "+filename)
+        else:
+            msg_stat = "er"
+            print("[ERROR] NO FILE NAME IT "+filename) 
+        #Mandar status
+        self.conn.send(msg_stat.encode("utf-8"))    
+          
     def exit(self):
         #Mandar mensaje de que se el servidor se va a cerrar
         print("[CLIENT POWEROFF]")
-        self.conn.send("[Succesful poweroff]".encode("utf-8"))       
+        self.conn.send("[Succesful poweroff]".encode("utf-8"))
+        
+               
         
 if __name__ == '__main__':
     IP = socket.gethostbyname(socket.gethostname()) #Obtiene la dirección ip a traves del nombre del host (esto ya que el valor de IP puede variar dependiendo de SO)
@@ -95,6 +98,8 @@ if __name__ == '__main__':
         if "UP"in data:
             server.upload(data)
         
+        elif "DELETE" in data:
+            server.delete(data)
         elif "EXIT" in data:
             server.exit()
             break    
