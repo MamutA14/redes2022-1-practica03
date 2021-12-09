@@ -28,20 +28,24 @@ class ClientFTP(object):
     
     def update(self,filename):
             clientFile = "../dataC/"+ filename
-            file = open(clientFile,"r")
-            data = file.read()
-            message = "UP"+","+filename
             try:
+                file = open(clientFile,"r")
+                data = file.read()
+                message = "UP"+","+filename
                 client.socket.send(message.encode("utf-8"))
                 msg = client.socket.recv(1024).decode("utf-8")
                 print(f"[SERVER] {msg}")
-                
                 client.socket.send(data.encode("utf-8"))
                 msg = client.socket.recv(1024).decode("utf-8")
                 print(f"[SERVER]:{msg}")
-            except IOError as e:
-                 if e.errno == errno.EPIPE:
-                    print("De nuevo pipe")
+            except FileNotFoundError as e :
+                print(str(e))
+                print("File doesn't exist please try again: ")
+                
+                 
+                
+            
+
             
              
             """
@@ -63,7 +67,16 @@ class ClientFTP(object):
                     self.socket.sendall(bytes_read)
                     progress.update(len(bytes_read))   
                     """ 
-                
+    
+    def exit(self):
+        try:
+            client.socket.send("EXIT".encode("utf-8"))
+            msg = client.socket.recv(1024).decode("utf-8")
+            print(f"[SERVER POWEROFF] {msg}")
+        except Exception as e:
+            print(str(e))
+            print("[ERROR CONECTION]")
+            #client.socket.send("[ERROR CONECTION]".encode())               
 if __name__ == '__main__':
     IP = socket.gethostbyname(socket.gethostname()) #Obtiene la dirección ip a traves del nombre del host (esto ya que el valor de IP puede variar dependiendo de SO)
     PORT = 2350
@@ -77,6 +90,9 @@ if __name__ == '__main__':
         elif command.upper() == "UP":
             filename = input("Insert name file: ")
             client.update(filename)
-            
+        
+        elif command.upper() == "EXIT":
+            client.exit()
+            break    
         else:
             client.socket.send(command.encode())

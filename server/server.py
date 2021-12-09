@@ -33,6 +33,9 @@ class ServerFTP(object):
         return self.conn.recv(self.__buffer )
     
     def upload(self,data):
+        menu_opt = data[0]
+        if(menu_opt == "EXIT"):
+            pass # Se creara la opción de salida 
         filename = data[1]
         #
         dirS = "../dataS/"
@@ -71,7 +74,11 @@ class ServerFTP(object):
         finally:
             self.datasock.close()
             print("Succesful onload")   """  
-            
+
+    def exit(self):
+        #Mandar mensaje de que se el servidor se va a cerrar
+        print("[CLIENT POWEROFF]")
+        self.conn.send("[Succesful poweroff]".encode("utf-8"))       
         
 if __name__ == '__main__':
     IP = socket.gethostbyname(socket.gethostname()) #Obtiene la dirección ip a traves del nombre del host (esto ya que el valor de IP puede variar dependiendo de SO)
@@ -89,7 +96,8 @@ if __name__ == '__main__':
             server.upload(data)
         
         elif "EXIT" in data:
-            pass #Desconectar    
+            server.exit()
+            break    
             
         
                

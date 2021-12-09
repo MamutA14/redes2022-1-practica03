@@ -9,4 +9,8 @@ al almacenamiento por parte del servidor) dataS se generara junto con el documen
 Anotaciones:
 Como esto es una simulación la carpeta dataC representara el almacenamiento por parte del cliente
 por lo que luego de haber puesto la opcion "UP" inmediatamente se le pedira el nombre del archivo a subir
-y este nombre sera buscado en esa misma carpeta 
+y este nombre sera buscado en esa misma carpeta.
+
+
+Tambien en dado caso que el archivo no se encuentre en dataC (o no se encuentre en subdirectorios de este) entonces
+desplegara un mensaje de error y que por favor lo vuelva a intentar 
