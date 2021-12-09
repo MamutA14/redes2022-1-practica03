@@ -1,0 +1,12 @@
+Bien lo que se va a hacer es simple por parte del cliente
+se va a declarar la opción "up". Up se encargara de actualizar 
+un archivo en el servidor el cual tenga el mismo nombre tanto del 
+lado del cliente como del servidor. Si no hay ningún documento que posea
+el nombre del archivo por parte del cliente entonces se generara un nuevo archivo.
+En caso dado que se este ejecutando por 1era vez el programa la carpeta (que corresponderia 
+al almacenamiento por parte del servidor) dataS se generara junto con el documento.
+
+Anotaciones:
+Como esto es una simulación la carpeta dataC representara el almacenamiento por parte del cliente
+por lo que luego de haber puesto la opcion "UP" inmediatamente se le pedira el nombre del archivo a subir
+y este nombre sera buscado en esa misma carpeta 
