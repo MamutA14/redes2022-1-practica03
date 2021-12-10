@@ -75,6 +75,59 @@ class ServerFTP(object):
             print("[ERROR] NO FILE NAME IT "+filename) 
         #Mandar status
         self.conn.send(msg_stat.encode("utf-8"))    
+    
+    def show(self,data):
+        directory = data[1]
+        msg =""
+        rootdir = "../dataS/"
+        '''
+            Funciones lambda que seran necesarias al aplicar mapeo 
+        '''
+        f1 = lambda s: rootdir+s
+        f2 = lambda s: s.replace(rootdir,'')
+        f3 = lambda s: rootdir+directory+s if (directory[-1] == '/') else rootdir+directory+'/'+s
+        f4 = lambda s: s.replace(rootdir+directory,'')if (directory[-1] == '/') else s.replace(rootdir+directory+'/','')
+        d1 = lambda s: s.replace(rootdir,'')+'/' 
+        d2 = lambda s: s.replace(rootdir+directory,'')+'/' if (directory[-1] == '/') else s.replace(rootdir+directory+'/','')+'/'
+        if (directory== "."):
+            try:
+                ls = os.listdir(rootdir)
+                files = (list(map(f2, (list(filter(os.path.isfile, map(f1,ls)))))))
+                dirs = (list(map(d1, (list(filter(os.path.isdir,map(f1,ls)))))))
+                msg = "  ".join(files + dirs)
+                print("[SUCCESS] SHOWING FILES AND DIRECTORIES TO CLIENT")
+                
+            except FileNotFoundError as e:
+                msg = "THERE IS NOTHING IN SERVER"
+                print("[ERROR] NOTHING IN THE SERVER")
+                
+            
+            finally:
+                self.conn.send(msg.encode("utf-8"))
+        else:
+            try:
+                ls = os.listdir(rootdir+directory)
+                files = (list(map(f4, (list(filter(os.path.isfile, map(f3,ls)))))))
+                dirs = (list(map(d2, (list(filter(os.path.isdir,map(f3,ls)))))))
+                msg = "  ".join(files + dirs)
+                print("[SUCCESS] SHOWING FILES AND DIRECTORIES TO CLIENT")
+                
+            except FileNotFoundError as e:
+                 
+                if(os.path.exists(rootdir)):
+                    print(str(e)) #Mando el mensaje de que no hay ningún elemento en el directorio raíz
+                    msg = "THERE IS  NO THAT DIRECTORY IN THE SERVER"
+                    print("[SUGGEST]RETRY WITH A REAL DIRECTORY")
+                else:
+                     msg = "THERE IS NOTHING IN SERVER"
+                     print("[ERROR] NOTHING IN THE SERVER")   
+            except NotADirectoryError as e:
+                msg = "THAT IS NOT A DIRECTORY PLEASE TRY AGAIN"
+                print("[ERROR] THIS IS A FILE")    
+            finally:
+                if(len(msg) == 0):
+                    msg = "."
+                self.conn.send(msg.encode("utf-8"))         
           
     def exit(self):
         #Mandar mensaje de que se el servidor se va a cerrar
@@ -93,15 +146,23 @@ if __name__ == '__main__':
     #Se genera un paso de escucha
     while True:
         data = server.receive()
-        print('Query: {0}'.format(data)) 
+        
+        if(len(data) == 0):
+            print("[CLIENT DISCONNECT PROTOCOL]")
+            break 
+        print('Query: {0}'.format(data))
         data = data.decode('utf-8').split(',')
         if "UP"in data:
             server.upload(data)
         
         elif "DELETE" in data:
             server.delete(data)
+            
+        elif "SHOW" in data:
+            server.show(data)    
         elif "EXIT" in data:
             server.exit()
+            server.socket.close()
             break    
             
         

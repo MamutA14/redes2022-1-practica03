@@ -1,0 +1,6 @@
+Este método tiene como función desplegar los archivos o directorios de una ruta en especifico del servidor.
+Para usarla hay que declarar en la terminal el comando "SHOW" luego de ello pedira una ruta en especial. Si en caso
+dado se requiere ver el directorio raíz se da enter sin haber declarado nada. En otro caso sen tendra que insertar la ruta.
+En caso de que se busque un archivo mandara un mensaje de que es un archivo y no se puede desplegar. Tambien maneja errores 
+tanto de no encontrar la ruta o mostrar al cliente que esa ruta está vacia. Al igual que con update se simulara la busqueda a partir
+del directorio dataS.
