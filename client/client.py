@@ -50,7 +50,6 @@ class ClientFTP(object):
                 msg = self.socket.recv(self.__buffer).decode("utf-8")
                 print(f"[SERVER] {msg}")
                 
-                #self.socket.recv(self.__buffer)
                 self.socket.send(struct.pack("i", os.path.getsize(clientFile)))
                 
                 data = file.read(self.__buffer)
@@ -125,7 +124,6 @@ class ClientFTP(object):
         else:
             #get file size if(exists)
             fm = msg.split(",")[1]
-            print(fm)
             clientFile = "../dataC/"+fm
             #Como queremos descargarlo y no actualizarlo entonces verificamos que no exista
             if(os.path.exists(clientFile)):
@@ -136,7 +134,6 @@ class ClientFTP(object):
                         #En caso de que se encuentre un archivo con el mismo nombre en el storage del cliente entonces simplemente le agregamos al nombre número extra para diferenciarlo una descarga de otra
                         fst =  f.find('(')
                         snd = f.find(')')
-                        print(f)
                         if (fst != -1  and snd != -1):
                             num =  int (f[fst+1:snd])
                             if(i < num):
@@ -153,7 +150,9 @@ class ClientFTP(object):
                 doc = self.socket.recv(self.__buffer)
                 file.write(doc)
                 b_recieved += self.__buffer
-            self.socket.send("File data received..DOWNLOAD SUCCESSFUL".encode("utf-8"))
+            msg2 =  "[CLIENT]File data received..DOWNLOAD SUCCESSFUL"    
+            self.socket.send(msg2.encode("utf-8"))
+            print(msg2)
             file.close()
             
                 

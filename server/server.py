@@ -47,9 +47,8 @@ class ServerFTP(object):
             file = open(serveFile,"wb") #Se creara un nuevo documento con ese nombre y dirección
             self.conn.send("Filename received".encode("utf-8"))
             
-            '''body = self.receive().decode("utf-8")
-            print(f"[RECV] File data received.")'''
-            file_size = struct.unpack("i",self.conn.recv(self.__buffer))[0]
+            
+            file_size = struct.unpack("i",self.conn.recv(4))[0]
             bytes_recieved = 0
             while bytes_recieved < file_size:
                 l = self.conn.recv(self.__buffer)
