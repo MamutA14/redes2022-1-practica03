@@ -2,9 +2,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING: 
     from _typeshed import Self
 import socket
-import os 
-import sys
-import time 
+import os  
 import struct
 from  dataclasses import dataclass
 
@@ -32,10 +30,11 @@ class ServerFTP(object):
     def receive(self):
         return self.conn.recv(self.__buffer )
     
-    def upload(self,data):
-        menu_opt = data[0]
-        if(menu_opt == "EXIT"):
-            pass # Se creara la opción de salida 
+    
+    
+    
+        
+    def upload(self,data): 
         filename = data[1]
         #
         dirS = "../dataS/"
@@ -45,17 +44,23 @@ class ServerFTP(object):
                 os.mkdir(dirS) 
             serveFile = dirS+filename
             print("[RECV] Filename received.")
-            file = open(serveFile,"w") #Se creara un nuevo documento con ese nombre y dirección
+            file = open(serveFile,"wb") #Se creara un nuevo documento con ese nombre y dirección
             self.conn.send("Filename received".encode("utf-8"))
-            body = self.receive().decode("utf-8")
-            print(f"[RECV] File data received.")
-            file.write(body)
+            
+            '''body = self.receive().decode("utf-8")
+            print(f"[RECV] File data received.")'''
+            file_size = struct.unpack("i",self.conn.recv(self.__buffer))[0]
+            bytes_recieved = 0
+            while bytes_recieved < file_size:
+                l = self.conn.recv(self.__buffer)
+                file.write(l)
+                bytes_recieved += self.__buffer
+            file.close()
             self.conn.send("File data received".encode("utf-8"))
             file.close()
         except OSError as e:
             print(str(e))
             print("Hubo un problema al crear el direcrtorio dataS")
-            self.conn.send("There was an intern problem uploading file please retry".encode("utf-8"))
             
     
     def delete(self, data):
@@ -128,7 +133,36 @@ class ServerFTP(object):
                 if(len(msg) == 0):
                     msg = "."
                 self.conn.send(msg.encode("utf-8"))         
-          
+    
+    def download(self,data):
+        pathname = data[1]
+        fullpathname = "../dataS/"+pathname
+        fname = fullpathname.split("/")[-1]
+        try:
+            
+            if(os.path.exists(fullpathname)):
+                
+                file = open(fullpathname, "rb")
+                #
+                msg1 = "Succesful search"+","+fname
+                print(msg1)
+                self.conn.send(struct.pack("i",os.path.getsize(fullpathname)))
+                
+                msg1 = self.conn.recv(self.__buffer).decode("utf-8")   
+                print(f"[CLIENT] {msg1}")
+                
+                data = file.read(self.__buffer)
+                #Mandar todos los elementos correspondientes
+                while data:
+                    self.conn.send(data)
+                    data = file.read(self.__buffer)
+                file.close()    
+                msg1 = self.conn.recv(self.__buffer).decode("utf-8")
+                print("[SUCCESS]"+msg1)
+            else:
+                self.conn.send(struct.pack("i",-1))
+        except NotADirectoryError as e:
+            print(str(e))      
     def exit(self):
         #Mandar mensaje de que se el servidor se va a cerrar
         print("[CLIENT POWEROFF]")
@@ -159,7 +193,10 @@ if __name__ == '__main__':
             server.delete(data)
             
         elif "SHOW" in data:
-            server.show(data)    
+            server.show(data)
+        
+        elif "DOWNLOAD" in data:
+            server.download(data)        
         elif "EXIT" in data:
             server.exit()
             server.socket.close()

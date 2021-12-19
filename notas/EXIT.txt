@@ -1,3 +1,0 @@
-La opción exit pondra fin a la comunicación entre cliente y servidor.Poniendo un fin a la 
-ejeccución de ambos. Pero antes que eso suceda al cliente le debe de llegar un mensaje de 
-que la sesión se cerro de manera exitosa.

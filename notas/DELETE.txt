@@ -1,7 +1,0 @@
-El método delete empezara cuando el usuario teclee la opción "del" de esa manera se le pedira la ruta del archivo 
-a eliminar. Si se encuentra en el directorio raíz solo es necesario poner el nombre. En otro caso hay que poner toda la ruta
-por ejemplo si se encuentra en el directorio dir0 que se encuentra en el directorio raíz entonces hay que declarar dir0/[nombre de archivo]nombre.
-Aquí pueden ocurrir tres posibles escenarios:
-            1) Se encuentra el archivo y se elimina de manera exitosa por parte del servidor(dataS) se manda mensaje de exito al cliente 
-            2) No se encuentra el archivo entonces se manda mensaje de error.
-            3) Como no hay ningún archivo por parte del servidor entonces la carpeta("almacenamiento") del servidor no se ha creado aun  por lo tanto manda mensaje de error

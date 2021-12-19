@@ -1,10 +1,7 @@
 import socket
 import os 
-import sys
-import time 
 import struct
-import tqdm
-import errno
+import sys
 
 class ClientFTP(object):
     
@@ -19,7 +16,7 @@ class ClientFTP(object):
         try:
             self.socket.connect((self.__ip,self.__port))
             print("[SUCCESSFUL CONECTION]")
-            client.socket.send("[SUCCESSFUL CONECTION]".encode())
+            self.socket.send("[SUCCESSFUL CONECTION]".encode())
             return 1
         except  ConnectionRefusedError as e:
             print(str(e))      
@@ -29,32 +26,39 @@ class ClientFTP(object):
         except BrokenPipeError as e:
             print(str(e))
             print("[ERROR CONECTION]")      
-            client.socket.send("[ERROR CONECTION]".encode())
+            self.socket.send("[ERROR CONECTION]".encode())
             return 0
         except OSError as e:
             try:
                 print(str(e))
                 print("[SUGGEST] CONNECTION WAS ESTABLISHED...don't make it again") 
-                client.socket.send("[CONNECTION STATUS]".encode("utf-8"))
+                self.socket.send("[CONNECTION STATUS]".encode("utf-8"))
                 return 1
             except Exception as e:
                 print(str(e))
                 print("CONNECTION IS NO LONGER AVAILABLE..CLOSING")
                 exit()
-                
-                   
+                               
     def update(self,filename):
             clientFile = "../dataC/"+ filename
             rootfile = clientFile.split("/")[-1] #Me devolvera el nombre del documento y no toda la dirección
             try:
-                file = open(clientFile,"r")
-                data = file.read()
+                file = open(clientFile,"rb")
+                
                 message = "UP"+","+rootfile
                 self.socket.send(message.encode("utf-8"))
-                msg = self.socket.recv(1024).decode("utf-8")
+                msg = self.socket.recv(self.__buffer).decode("utf-8")
                 print(f"[SERVER] {msg}")
-                self.socket.send(data.encode("utf-8"))
-                msg = self.socket.recv(1024).decode("utf-8")
+                
+                #self.socket.recv(self.__buffer)
+                self.socket.send(struct.pack("i", os.path.getsize(clientFile)))
+                
+                data = file.read(self.__buffer)
+                while data:
+                    self.socket.send(data)
+                    data = file.read(self.__buffer)
+                file.close()    
+                msg = self.socket.recv(self.__buffer).decode("utf-8")
                 print(f"[SERVER]:{msg}")
             except FileNotFoundError as e :
                 print(str(e))
@@ -71,7 +75,7 @@ class ClientFTP(object):
         try:
              msg = "DELETE"+","+filename
              self.socket.send(msg.encode("utf-8"))
-             msg = self.socket.recv(1024).decode("utf-8")
+             msg = self.socket.recv(self.__buffer).decode("utf-8")
              if(msg == "s"):
                  print(f"[SERVER STATUS] SUCCESFULL DELETE OF "+filename)
              elif(msg == "er"):
@@ -95,7 +99,7 @@ class ClientFTP(object):
             else:
                 msg +=","+directory #Se le pasa todo el directorio correspondiente
             self.socket.send(msg.encode("utf-8"))
-            msg = self.socket.recv(1024).decode("utf-8")
+            msg = self.socket.recv(self.__buffer).decode("utf-8")
             if(msg != "e" and msg != "." and len(msg)!=0):
                 print("[SERVER STATUS] \n"+msg)
             elif(msg == '.'):
@@ -111,11 +115,52 @@ class ClientFTP(object):
             print("CONNECTION IS NO LONGER AVAILABLE..CLOSING")
             exit()
             
-    
+    def download(self,filename):
+        msg = "DOWNLOAD"+","+filename
+        self.socket.send(msg.encode("utf-8"))
+        file_size = struct.unpack("i",self.socket.recv(self.__buffer))[0] 
+        if(file_size == -1):
+            print("[SERVER ERROR] FILE DOESN'T EXIST IN SERVER")
+            return
+        else:
+            #get file size if(exists)
+            fm = msg.split(",")[1]
+            print(fm)
+            clientFile = "../dataC/"+fm
+            #Como queremos descargarlo y no actualizarlo entonces verificamos que no exista
+            if(os.path.exists(clientFile)):
+                files_list = os.listdir("../dataC/") #El directorio para simular el storage del cliente  
+                i = 0
+                for f in files_list:
+                    if(f.find(fm.split(".")[0])  != -1):
+                        #En caso de que se encuentre un archivo con el mismo nombre en el storage del cliente entonces simplemente le agregamos al nombre número extra para diferenciarlo una descarga de otra
+                        fst =  f.find('(')
+                        snd = f.find(')')
+                        print(f)
+                        if (fst != -1  and snd != -1):
+                            num =  int (f[fst+1:snd])
+                            if(i < num):
+                                i = num  
+                               
+                clientfilename = fm.split(".")[0] #Asi se evita que se actualice el actual que se posee
+                clientfileext =fm.split(".")[1]
+                #Se encuentra la descarga n-esima +1 y al nombre de este archivo le sumamos un uno más 
+                clientFile = '../dataC/'+clientfilename +'(' + str(i+1) + ').'+clientfileext
+            file = open(clientFile,"wb") #Se creara un nuevo documento con ese nombre y dirección
+            self.socket.send("Filename received".encode("utf-8"))
+            b_recieved = 0
+            while b_recieved < file_size:
+                doc = self.socket.recv(self.__buffer)
+                file.write(doc)
+                b_recieved += self.__buffer
+            self.socket.send("File data received..DOWNLOAD SUCCESSFUL".encode("utf-8"))
+            file.close()
+            
+                
     def exit(self):
         try:
             self.socket.send("EXIT".encode("utf-8"))
-            msg = self.socket.recv(1024).decode("utf-8")
+            msg = self.socket.recv(self.__buffer).decode("utf-8")
             if(len(msg)==0):
                 print("CONNECTION IS NO LONGER AVAILABLE..CLOSING")
                 exit()
@@ -132,7 +177,10 @@ if __name__ == '__main__':
     client = ClientFTP(IP,PORT)
     print( "------[Client ftp]")
     connected = False
+    
+    
     while True:
+        print("-----------MENU(Teclee su opción)--------\n             *)CONN(Conexión a servidor..siempre ejecutar al principio)\n             *)UP(actualizar archivo del servidor)\n             *)SHOW(Muestra archivos del servidor)\n             *)DOWN(Descarga archivos de servidor)\n             *)DEL(Elimina un archivo del programa)\n             *)EXIT(Salir del programa)      ")
         command = input ("[Insert command]: ")
         if command.upper() == "CONN":
             print("Sending Query Connection")
@@ -149,7 +197,9 @@ if __name__ == '__main__':
         
         elif command.upper() == "DEL":
             if(connected):
-                filename = input("Insert name file: ")
+                filename=""
+                while(len(filename) == 0):
+                    filename = input("Insert name file: ")
                 client.delete(filename)
             else:
                 print("[ERROR OPTION] PLEASE CONNECT TO SERVER: USE [CONN] OPTION IN THE LINE COMMAND")  
@@ -161,7 +211,14 @@ if __name__ == '__main__':
             else:
                 print("[ERROR OPTION] PLEASE CONNECT TO SERVER: USE [CONN] OPTION IN THE LINE COMMAND")  
    
-        
+        elif command.upper() == "DOWN":
+            if(connected):
+                filename=""
+                while(len(filename) == 0):
+                    filename = input("Insert path with filename or  only filename(if it's in root): ")
+                client.download(filename)
+            else:
+               print("[ERROR OPTION] PLEASE CONNECT TO SERVER: USE [CONN] OPTION IN THE LINE COMMAND")     
         elif command.upper() == "EXIT":
             if(connected):
                 client.exit()
@@ -171,4 +228,6 @@ if __name__ == '__main__':
                 print("[ERROR OPTION] PLEASE CONNECT TO SERVER: USE [CONN] OPTION IN THE LINE COMMAND")
                 
         else:
-            client.socket.send(command.encode())
+            print("COMMAND NOT FOUND PLEASE TRY AGAIN")
+            if(connected):
+                client.socket.send(command.encode())
