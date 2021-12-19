@@ -1,4 +1,4 @@
-# Manual de uso de socket cliente-servidor
+# Manual de uso de socket cliente-servidor (ALAM ACOSTA MEZA num.d.cuenta:315124569)
 ## Inicialización
 Primero se tiene que ejecutar el servidor o el cliente.(Realmente no importa el orden).Para ello hay que ubicarse en las carpetas client y server de manera correspondiente.
 ### Cliente
